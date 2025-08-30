@@ -1,0 +1,11 @@
+A clojure data inspector for the terminal.
+Something like reveal[1] or portal[2] or cider-inspect[3] but running in a terminal.
+
+Multiple ways of running it:
+1. As a separate thing that gets connected during repl session, like portal
+2. As a wrapper for the clojure cli that starts nrepl and enables the tap / inspector output automatically.
+
+
+[1] https://vlaaad.github.io/reveal/
+[2] https://github.com/djblue/portal
+[3] https://docs.cider.mx/cider/debugging/inspector.html
