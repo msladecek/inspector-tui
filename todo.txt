@@ -39,6 +39,12 @@ Drill-down mode
 Documentation mode
   d: Add documentation to the viewer
 
+TODO: nrepl middleware
+TODO: configure the port
+  - configure with a command line argument for viewer
+  - make a function that creates a send-data! function with an explicit port
+  - use nrepl port +1 if available
+
 
 [1] https://vlaaad.github.io/reveal/
 [2] https://github.com/djblue/portal

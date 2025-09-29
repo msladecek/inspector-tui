@@ -51,6 +51,7 @@
 
     :else
     (pprint (datafy data)))
+
   true)
 
 (defn inspector-handler [stream info]
@@ -76,9 +77,6 @@
   (let [c @client]
     @(s/put! c value)
     @(s/take! c)))
-
-
-;; TODO: nrepl middleware
 
 (defn -main [& args]
   ;; run tcp server as a viewer
