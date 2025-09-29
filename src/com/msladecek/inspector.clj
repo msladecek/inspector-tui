@@ -1,14 +1,13 @@
 (ns com.msladecek.inspector
   (:require
     [aleph.tcp :as tcp]
-    [clojure.datafy :refer [datafy]]
     [clojure.edn :as edn]
-    [clojure.pprint :refer [pprint print-table]]
-    [clojure.spec.alpha :as spec]
     [gloss.core :as gloss]
     [gloss.io :as io]
     [manifold.deferred :as d]
-    [manifold.stream :as s]))
+    [manifold.stream :as s]
+    [com.msladecek.inspector.protocols :as proto]
+    [com.msladecek.inspector.impl.basic-viewer :refer [make-basic-viewer]]))
 
 (defn -ignore-tag [tag value] value)
 
@@ -40,40 +39,26 @@
   (d/chain (tcp/client {:host host :port port})
            #(wrap-duplex-stream byte-protocol %)))
 
-(def reset-seq "\033[0m")
-(def clear-screen-seq "\033[2J")
-(defn move-cursor-seq [row column]
-  (format "\033[%d;%dH" row column))
-
-(spec/def ::table (spec/coll-of map?))
-
-(defn draw-to-screen [data]
-  (print reset-seq clear-screen-seq (move-cursor-seq 1 1))
-  (cond
-    (spec/valid? ::table data)
-    (let [all-keys (->> data
-                        (map keys)
-                        (apply concat)
-                        (into #{})
-                        sort)]
-      (print-table all-keys data))
-
-    :else
-    (pprint (datafy data)))
-
-  true)
-
-(defn inspector-handler [stream info]
+(defn inspector-handler [stream info viewer]
   (d/loop []
     (-> (d/let-flow [message (s/take! stream ::none)]
           (when-not (= ::none message)
-            (let [success (draw-to-screen message)
+            (let [success (proto/display viewer message)
                   response (if success "ok" "not-ok")]
               (d/let-flow [result (s/put! stream response)]
                 (when result (d/recur))))))
         (d/catch (fn [ex]
                    (s/put! stream (str "ERROR: " ex))
                    (s/close! stream))))))
+
+(defn -main [& args]
+  ;; run tcp server as a viewer
+  (when (= ["start-server"] args)
+    (let [viewer (make-basic-viewer)]
+      (start-tcp-server
+        (fn [stream info]
+          (inspector-handler stream info viewer))
+        10001))))
 
 (def client (atom nil))
 
@@ -87,14 +72,6 @@
   (let [c @client]
     @(s/put! c value)
     @(s/take! c)))
-
-(defn -main [& args]
-  ;; run tcp server as a viewer
-  (when (= ["start-server"] args)
-    (start-tcp-server
-      (fn [stream info]
-        (inspector-handler stream info))
-      10001)))
 
 (comment
   (send-data! "potato")
