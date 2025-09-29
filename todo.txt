@@ -2,8 +2,42 @@ A clojure data inspector for the terminal.
 Something like reveal[1] or portal[2] or cider-inspect[3] but running in a terminal.
 
 Multiple ways of running it:
-1. As a separate thing that gets connected during repl session, like portal
-2. As a wrapper for the clojure cli that starts nrepl and enables the tap / inspector output automatically.
+  1. As a separate thing that gets connected during repl session, like portal
+  2. As a wrapper for the clojure cli that starts nrepl and enables the tap / inspector output automatically.
+
+Server / client over tcp
+  Q: Who is the server and who is the client?
+  -> not sure, proceed while making it agnostic
+
+  In nrepl wrapper mode, nrepl responses are sent to the inspector window over the socket.
+  In separate application mode, the tap> sends data to the inspector window over the socket.
+
+Inspector user interface
+  Show one piece of data at a time.
+  Store previous data in a list.
+  Only show as much as fits into the screen, scroll around for the rest.
+
+  Available representations:
+    pprint
+    table (only when spec allows it)
+    recursive table (shows nested table-compliant data as tables)
+
+  Keybindings:
+    ?: open help, keybindings
+    h, j, k, l: to scroll
+    H, L: to move backward and forward in the list
+    [, ]: cycle representations
+    x: delete datum from the list (opens a confirmation dialog)
+    X: delete datum from the list (without a confirmation dialog)
+    q: exit (opens a confirmation dialog)
+    Q: exit (no confirmation dialog)
+
+Drill-down mode
+  h, j, k, l: navigates elements in the data
+  return: selected piece of data is added to the list of data
+
+Documentation mode
+  d: Add documentation to the viewer
 
 
 [1] https://vlaaad.github.io/reveal/
