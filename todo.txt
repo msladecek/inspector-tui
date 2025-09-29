@@ -45,6 +45,8 @@ TODO: configure the port
   - make a function that creates a send-data! function with an explicit port
   - use nrepl port +1 if available
 
+MAYBE: use orchard.inspector https://github.com/clojure-emacs/orchard/blob/master/doc/inspector.org
+
 
 [1] https://vlaaad.github.io/reveal/
 [2] https://github.com/djblue/portal

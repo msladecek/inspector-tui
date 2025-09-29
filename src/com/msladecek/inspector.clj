@@ -10,12 +10,21 @@
     [manifold.deferred :as d]
     [manifold.stream :as s]))
 
+(defn -ignore-tag [tag value] value)
+
+(defn -try-to-read-string [string-value]
+  (try
+    (edn/read-string {:eof nil :default -ignore-tag}
+                     string-value)
+    (catch Exception _
+      string-value)))
+
 (def byte-protocol
   (gloss/compile-frame
     (gloss/finite-frame :uint32
       (gloss/string :utf-8))
     pr-str
-    edn/read-string))
+    -try-to-read-string))
 
 (defn wrap-duplex-stream [protocol stream]
   (let [out (s/stream)]
@@ -68,6 +77,7 @@
 
 (def client (atom nil))
 
+;; TODO: this should be a future?
 (defn send-data! [value]
   ;; (require '[com.msladecek.inspector :as inspector])
   ;; (add-tap inspector/send-data!)
