@@ -5,8 +5,8 @@
         org.clj-commons/gloss {:mvn/version "0.3.6"}}
 
  :aliases {:viewer {:main-opts ["-m" "com.msladecek.inspector"]}
-           :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
-                                cider/cider-nrepl {:mvn/version "0.57.0"} }
-                   :main-opts  ["--main" "nrepl.cmdline"
-                                "--middleware" "[cider.nrepl/cider-middleware com.msladecek.inspector.nrepl/middleware]"
-                                "--interactive"]}}}
+           :nrepl+inspector {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
+                                          cider/cider-nrepl {:mvn/version "0.57.0"} }
+                             :main-opts  ["--main" "nrepl.cmdline"
+                                          "--middleware" "[cider.nrepl/cider-middleware com.msladecek.inspector.nrepl/middleware]"
+                                          "--interactive"]}}}
