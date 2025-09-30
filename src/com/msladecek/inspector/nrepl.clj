@@ -2,12 +2,14 @@
   (:require
     [cider.nrepl.pprint :as cider-pprint]
     [clojure.pprint :refer [pprint print-table]]
-    [com.msladecek.inspector :refer [send-data!]]
     [nrepl.middleware :as m]
-    [nrepl.middleware.print]))
+    [nrepl.middleware.print]
+    [com.msladecek.inspector :as inspector]))
 
 (defn print-replacement [value writer options]
-  (send-data! value)
+  (inspector/send-data!
+    (get options :com.msladecek.inspector.nrepl/middleware-options {})
+    value)
   (cider-pprint/pprint value writer options))
 
 (defn middleware [next-handler]
