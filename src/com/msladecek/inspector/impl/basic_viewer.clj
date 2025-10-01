@@ -49,6 +49,7 @@
   (when show-help
     (println (->> ["Keybindings:"
                    "  ?      Toggle help"
+                   "  X      Delete the view from the list (no confirmation)"
                    "  H, L   Switch view (backwards, forwards)"
                    "  [, ]   Cycle view representations (backwards, forwards)"
                    ""]
@@ -105,6 +106,23 @@
 
                (= \] key)
                (update-in state [:views selected-view-idx :representation] next-representation)
+
+               (= \X key)
+               (assoc state
+                      :views (->> views
+                                  (keep-indexed (fn [idx view]
+                                                  (when (not= selected-view-idx idx)
+                                                    view)))
+                                  (into []))
+                      :selected-view-idx (cond
+                                           (= 1 (count views))
+                                           nil
+
+                                           (= (dec (count views)) selected-view-idx)
+                                           (dec selected-view-idx)
+
+                                           :else
+                                           selected-view-idx))
 
                :else
                state)))))
