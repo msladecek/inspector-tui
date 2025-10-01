@@ -43,50 +43,90 @@
        (map (fn [[r1 r2]] [r2 r1]))
        (into {})))
 
-(defn print-state [{:keys [show-help views selected-view-idx]}]
+(defn print-sections
+  ([sections]
+   (print-sections {} sections))
+  ([{:keys [width height]} sections]
+   (let [content-lines (->> sections
+                            (map #(string/split-lines (with-out-str (print %))))
+                            (interpose [:separator])
+                            (apply concat)
+                            (into []))
+         inner-width (if width
+                       (- width 2)
+                       (->> content-lines
+                            (filter #(not= :separator %))
+                            (map count)
+                            (apply max 0)))
+         inner-height (if height
+                        (- height 2)
+                        (count content-lines))
+         plan-lines (->> content-lines
+                         (#(concat % (repeat (- inner-height (count %)) "")))
+                         (take inner-height)
+                         (into []))]
+     (when-not (or (< inner-height 0) (< inner-width 0))
+       (print "┏")
+       (print (apply str (repeat inner-width "━")))
+       (println "┓")
+       (doseq [line plan-lines]
+         (if (= :separator line)
+           (do
+             (print "┠")
+             (print (apply str (repeat inner-width "─")))
+             (println "┨"))
+           (do
+             (print "┃")
+             (print (subs line 0 (min (count line) inner-width)))
+             (print (apply str (repeat (- inner-width (count line)) " ")))
+             (println "┃"))))
+       (print "┗")
+       (print (apply str (repeat inner-width "━")))
+       (print "┛")))))
+
+(defn print-state [{:keys [size show-help views selected-view-idx]}]
   ;; TODO: fix broken output when a bunch of data is submitted at once
-  ;; TODO: draw boxes around the various components
-  ;;   /--------------------------\
-  ;;   | help text (when enabled) |
-  ;;   \--------------------------/
-  ;;   /--------------------------\
-  ;;   | view n/N                 |
-  ;;   |--------------------------|
-  ;;   | data representation      |
-  ;;   \--------------------------/
+  (let [help-content (->> ["Keybindings:"
+                           "  ?      Toggle help"
+                           "  X      Delete the selected view (no confirmation)"
+                           "  H, L   Switch view (backwards, forwards)"
+                           "  [, ]   Cycle representations (backwards, forwards)"
+                           ""]
+                          (string/join "\n"))
+        view (get views selected-view-idx)
+        preamble (format "view %s/%d%s"
+                         (if (nil? selected-view-idx) "-" (str (inc selected-view-idx)))
+                         (count views)
+                         (if view (str " as " (-> view :representation name)) ""))
+        content (with-out-str
+                  (cond
+                    (nil? selected-view-idx)
+                    (println "no view selected")
 
-  (print reset-seq clear-screen-seq (move-cursor-seq 1 1))
-  (when show-help
-    (println (->> ["Keybindings:"
-                   "  ?      Toggle help"
-                   "  X      Delete the view from the list (no confirmation)"
-                   "  H, L   Switch view (backwards, forwards)"
-                   "  [, ]   Cycle view representations (backwards, forwards)"
-                   ""]
-                  (string/join "\n"))))
-  (let [view (get views selected-view-idx)]
-    (println (format "view %s/%d%s"
-                     (if (nil? selected-view-idx) "-" (str (inc selected-view-idx)))
-                     (count views)
-                     (if view (str " as " (-> view :representation name)) "")))
-    (cond
-      (nil? selected-view-idx)
-      (println "no view selected")
+                    (<= (count views) selected-view-idx)
+                    (println (format "invalid selected view %d, only %d views available"
+                                     (inc selected-view-idx) (count views)))
 
-      (<= (count views) selected-view-idx)
-      (println (format "invalid selected view %d, only %d views available"
-                       (inc selected-view-idx) (count views)))
-
-      :else
-      (try
-        (print-data view)
-        (catch Exception _
-          (println (format "ERROR: failed to represent the data as %s, displaying instead the default representation:"
-                           (-> view :representation name)))
-          (print-data (assoc view :representation :default)))))))
+                    :else
+                    (try
+                      (print-data view)
+                      (catch Exception _
+                        (println (format "ERROR: failed to represent the data as %s, displaying instead the default representation:"
+                                         (-> view :representation name)))
+                        (print-data (assoc view :representation :default))))))
+        sections (->> [(when show-help help-content) preamble content]
+                      (filterv identity))]
+    (print clear-screen-seq (move-cursor-seq 1 1))
+    (print-sections (update size :height (fnil dec 1)) sections)
+    (println)
+    (print "Toggle help with [?]")
+    (flush)))
 
 (defrecord BasicViewer [state]
   proto/Viewer
+  (set-size [_ size]
+    (swap! state assoc :size size))
+
   (display [_ data]
     (swap! state (fn [{:keys [views] :as state}]
                    (-> state

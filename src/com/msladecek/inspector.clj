@@ -12,6 +12,13 @@
       :out
       (string/trim)))
 
+(defn get-terminal-size []
+  (let [[height width] (-> (stty! "size")
+                           (string/split #" ")
+                           (->> (map parse-long)))]
+    {:height height
+     :width width}))
+
 (defmacro with-char-input
   "Set the tty configuration to give us one character at a time."
   [& body]
@@ -28,6 +35,7 @@
     (with-open [in System/in]
       (loop []
         (let [char-value (.read in)]
+          (proto/set-size viewer (get-terminal-size))
           (proto/on-key viewer (char char-value)))
         (recur)))))
 
@@ -64,8 +72,10 @@
 
 (defn make-viewer [opts]
   (let [constructor (case (:viewer opts)
-                      :basic make-basic-viewer)]
-    (constructor opts)))
+                      :basic make-basic-viewer)
+        viewer (constructor opts)]
+    (proto/set-size viewer (get-terminal-size))
+    viewer))
 
 (defn usage [options-summary]
   (->> ["Usage: inspector [OPTIONS]"
@@ -106,11 +116,16 @@
         (.join input-thread)))))
 
 (defn send-data!
+  "Send data to the viewer.
+  Usage with `tap>`:
+
+      (require '[com.msladecek.inspector :as inspector])
+      (add-tap inspector/send-data!)
+
+  "
   ([value]
    (send-data! {} value))
   ([opts value]
-   ;; (require '[com.msladecek.inspector :as inspector])
-   ;; (add-tap inspector/send-data!)
    (let [transport (make-transport (merge default-opts opts))]
      (proto/submit transport value))))
 
