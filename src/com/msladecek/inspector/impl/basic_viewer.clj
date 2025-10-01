@@ -85,35 +85,38 @@
     true)
 
   (on-key [_ key]
-    (when (#{\H \L \[ \] \?} key)
-      (swap! state (fn [{:keys [selected-view-idx views] :as state}]
-                     (cond
-                       (= \? key)
-                       (update state :show-help not)
+    (swap! state
+           (fn [{:keys [selected-view-idx views] :as state}]
+             (cond
+               (= \? key)
+               (update state :show-help not)
 
-                       (nil? selected-view-idx)
-                       state
+               (nil? selected-view-idx)
+               state
 
-                       (and (= \H key) (< 0 selected-view-idx))
-                       (update state :selected-view-idx dec)
+               (and (= \H key) (< 0 selected-view-idx))
+               (update state :selected-view-idx dec)
 
-                       (and (= \L key) (< selected-view-idx (dec (count views))))
-                       (update state :selected-view-idx inc)
+               (and (= \L key) (< selected-view-idx (dec (count views))))
+               (update state :selected-view-idx inc)
 
-                       (= \[ key)
-                       (update-in state [:views selected-view-idx :representation] previous-representation)
+               (= \[ key)
+               (update-in state [:views selected-view-idx :representation] previous-representation)
 
-                       (= \] key)
-                       (update-in state [:views selected-view-idx :representation] next-representation)
+               (= \] key)
+               (update-in state [:views selected-view-idx :representation] next-representation)
 
-                       :else
-                       state)))
-      (print-state @state))))
+               :else
+               state)))))
 
 (defn make-basic-viewer
   ([]
-   (let [viewer (->BasicViewer (atom {:views []}))]
-     (print-state @(:state viewer))
-     viewer))
+   (let [state (atom {})]
+     (add-watch state :printer
+                (fn [_key _state-atom previous-state new-state]
+                  (when-not (= previous-state new-state)
+                    (print-state new-state))))
+     (reset! state {:views []})
+     (->BasicViewer state)))
    ([_opts]
     (make-basic-viewer)))
