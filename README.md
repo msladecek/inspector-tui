@@ -1,4 +1,4 @@
-# Inspector TUI
+# Inspector
 
 A simple terminal based data inspector for clojure.
 
