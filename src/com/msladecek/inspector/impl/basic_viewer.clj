@@ -40,7 +40,7 @@
 (defrecord BasicViewer [state]
   proto/Viewer
   (display [_ data]
-    (swap! state (fn [{:keys [selected-view-idx views] :as state}]
+    (swap! state (fn [{:keys [views] :as state}]
                    (-> state
                        (update :views conj data)
                        (assoc :selected-view-idx (count views)))))
@@ -64,7 +64,10 @@
                        state)))
       (draw-state-to-screen @state))))
 
-(defn make-basic-viewer []
-  (let [viewer (->BasicViewer (atom {:views []}))]
-    (draw-state-to-screen @(:state viewer))
-    viewer))
+(defn make-basic-viewer
+  ([]
+   (let [viewer (->BasicViewer (atom {:views []}))]
+     (draw-state-to-screen @(:state viewer))
+     viewer))
+   ([_opts]
+    (make-basic-viewer)))

@@ -1,7 +1,6 @@
 (ns com.msladecek.inspector.nrepl
   (:require
     [cider.nrepl.pprint :as cider-pprint]
-    [clojure.pprint :refer [pprint print-table]]
     [nrepl.middleware :as m]
     [nrepl.middleware.print]
     [com.msladecek.inspector :as inspector]))

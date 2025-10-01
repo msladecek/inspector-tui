@@ -1,58 +1,11 @@
 (ns com.msladecek.inspector
   (:require
-    [aleph.tcp :as tcp]
-    [clojure.edn :as edn]
     [clojure.java.shell :as shell]
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
-    [gloss.core :as gloss]
-    [gloss.io :as io]
-    [manifold.deferred :as d]
-    [manifold.stream :as s]
     [com.msladecek.inspector.protocols :as proto]
-    [com.msladecek.inspector.impl.basic-viewer :refer [make-basic-viewer]]))
-
-(defn -ignore-tag [tag value] value)
-
-(defn -try-to-read-string [string-value]
-  (try
-    (edn/read-string {:eof nil :default -ignore-tag}
-                     string-value)
-    (catch Exception _
-      string-value)))
-
-(def byte-protocol
-  (gloss/compile-frame
-    (gloss/finite-frame :uint32
-      (gloss/string :utf-8))
-    pr-str
-    -try-to-read-string))
-
-(defn wrap-duplex-stream [protocol stream]
-  (let [out (s/stream)]
-    (s/connect (s/map #(io/encode protocol %) out) stream)
-    (s/splice out (io/decode-stream stream protocol))))
-
-(defn start-tcp-server [handler port]
-  (tcp/start-server (fn [stream info]
-                      (handler (wrap-duplex-stream byte-protocol stream) info))
-                    {:port port}))
-
-(defn start-tcp-client [host port]
-  (d/chain (tcp/client {:host host :port port})
-           #(wrap-duplex-stream byte-protocol %)))
-
-(defn inspector-handler [stream info viewer]
-  (d/loop []
-    (-> (d/let-flow [message (s/take! stream ::none)]
-          (when-not (= ::none message)
-            (let [success (proto/display viewer message)
-                  response (if success "ok" "not-ok")]
-              (d/let-flow [result (s/put! stream response)]
-                (when result (d/recur))))))
-        (d/catch (fn [ex]
-                   (s/put! stream (str "ERROR: " ex))
-                   (s/close! stream))))))
+    [com.msladecek.inspector.impl.basic-viewer :refer [make-basic-viewer]]
+    [com.msladecek.inspector.impl.tcp-transport :as tcp-transport]))
 
 (defn stty! [args]
   (-> (shell/sh "sh" "-c" (str "stty " args " < /dev/tty"))
@@ -78,31 +31,52 @@
           (proto/on-key viewer (char char-value)))
         (recur)))))
 
-(def -default-connection-opts
-  {:port 10001
-   :host "localhost"})
+(defn validate-set-of-keywords [permitted-values]
+  [permitted-values (->> permitted-values
+                         (map name)
+                         (sort)
+                         (str/join ", ")
+                         (str "Value must be one of: "))])
 
 (def cli-options
-  [[nil "--port PORT"
-    :default (:port -default-connection-opts)
+  [[nil "--viewer STRING" "The kind of viewer which will be launched"
+    :default :basic
+    :default-desc "basic"
+    :parse-fn keyword
+    :validate (validate-set-of-keywords #{:basic})]
+   [nil "--transport STRING" "Transport protocol which will be used to send data to the viewer"
+    :default :tcp
+    :default-desc "tcp"
+    :parse-fn keyword
+    :validate (validate-set-of-keywords #{:tcp})]
+   [nil "--port PORT" "Used in configuring the transport"
+    :default (:port tcp-transport/default-connection-opts)
     :parse-fn parse-long
-    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
-   ["-h" "--help" "Print the usage and exit"]])
+    :validate [#(< 0 % 0x10000) "Port must be a number between 0 and 65536"]]
+   ["-h" "--help" "Print the help message and exit"]])
+
+(defn make-transport [opts]
+  (let [constructor (case (:transport opts)
+                      :tcp tcp-transport/make-tcp-transport)]
+    (constructor opts)))
+
+(defn make-viewer [opts]
+  (let [constructor (case (:viewer opts)
+                      :basic make-basic-viewer)]
+    (constructor opts)))
 
 (defn usage [options-summary]
-  (->> ["Usage: inspector [--port PORT] <command>"
+  (->> ["Usage: inspector [OPTIONS]"
         ""
         "Options:"
         options-summary
         ""
-        "Commands:"
-        "  start-viewer  Start data viewer"]
+        "For more info, see <https://github.com/msladecek/inspector-tui>"]
        (str/join "\n")))
 
 (defn -main [& args]
   (let [opts (cli/parse-opts args cli-options)
         usage-str (-> opts :summary usage)
-        command (-> opts :arguments first)
         errors (-> opts :errors)]
     (cond
       (seq errors)
@@ -116,43 +90,27 @@
         (println usage-str)
         (System/exit 0))
 
-      (= command "start-viewer")
-      (let [viewer (make-basic-viewer)
-            publisher-thread (Thread/new #(start-tcp-server
-                                            (fn [stream info]
-                                              (inspector-handler stream info viewer))
-                                            (-> opts :options :port)))
-            input-thread (Thread/new #(start-input-loop viewer))]
-        (.start publisher-thread)
-        (.start input-thread)
-        (.join publisher-thread)
-        (.join input-thread))
-
-      (not command)
-      (binding [*out* *err*]
-        (println "A command is required")
-        (println usage-str)
-        (System/exit 1))
-
       :else
-      (binding [*out* *err*]
-        (println "Unknown command" command)
-        (println usage-str)
-        (System/exit 1)))))
+      (let [viewer (make-viewer (-> opts :options))
+            transport (make-transport (-> opts :options))
+            viewer-thread (Thread/new #(proto/make-receiver
+                                         transport
+                                         (fn [message]
+                                           (proto/display viewer message))))
+            input-thread (Thread/new #(start-input-loop viewer))]
+        (.start viewer-thread)
+        (.start input-thread)
+        (.join viewer-thread)
+        (.join input-thread)))))
 
 (defn send-data!
   ([value]
    (send-data! {} value))
   ([opts value]
-  ;; TODO: should this be a future?
-  ;; TODO: automatically reconnect
-
-  ;; (require '[com.msladecek.inspector :as inspector])
-  ;; (add-tap inspector/send-data!)
-
-  (let [merged-opts (merge -default-connection-opts opts)
-        client-stream @(start-tcp-client (:host merged-opts) (:port merged-opts))]
-    @(s/put! client-stream value))))
+   ;; (require '[com.msladecek.inspector :as inspector])
+   ;; (add-tap inspector/send-data!)
+   (let [transport (make-transport opts)]
+     (proto/submit transport value))))
 
 (comment
   (send-data! "potato")

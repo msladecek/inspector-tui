@@ -8,7 +8,7 @@ A simple terminal based data inspector for clojure.
 
 ### Start the viewer
 
-Run the data viewer in a terminal using the `start-viewer` command, it may be useful to create an `:inspector` alias first.
+Run the data viewer in a terminal using the `com.msladecek.inspector/-main` function, it may be useful to create an `:inspector` alias first.
 
     ;; deps.edn
     {:aliases {:inspector
@@ -18,7 +18,7 @@ Run the data viewer in a terminal using the `start-viewer` command, it may be us
 
 Then start the viewer:
 
-    clojure -M:inspector start-viewer
+    clojure -M:inspector
 
 Once the viewer starts, your terminal will look like this:
 
@@ -49,6 +49,10 @@ shows up as:
     |    red |         |  :one |
     |   blue |    sour |     2 |
     |        |   sweet | three |
+
+For a full list of viewer options, see the usage help message:
+
+    clojure -M:inspector --help
 
 ### Submit data using `tap>`
 
@@ -94,7 +98,7 @@ Whenever a new value is submitted to the viewer, it automatically goes to the en
 ## Acknowledgements
 
 Inspired by the inspector tool that ships with [`cider`](https://cider.mx/) (emacs plugin).
-I wanted a basic, editor agnostic tool which replicates some of its functionality.
+I wanted a basic, editor-agnostic tool which replicates some of its functionality.
 
 ## Alternatives
 
