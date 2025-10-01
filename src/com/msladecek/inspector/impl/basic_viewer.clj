@@ -3,6 +3,7 @@
     [clojure.datafy :refer [datafy]]
     [clojure.pprint :as pprint]
     [clojure.spec.alpha :as spec]
+    [clojure.string :as string]
     [com.msladecek.inspector.protocols :as proto]))
 
 (def reset-seq "\033[0m")
@@ -42,9 +43,16 @@
        (map (fn [[r1 r2]] [r2 r1]))
        (into {})))
 
-(defn print-state [{:keys [views selected-view-idx]}]
+(defn print-state [{:keys [show-help views selected-view-idx]}]
   ;; TODO: fix broken output when a bunch of data is submitted at once
   (print reset-seq clear-screen-seq (move-cursor-seq 1 1))
+  (when show-help
+    (println (->> ["Keybindings:"
+                   "  ?      Toggle help"
+                   "  H, L   Switch view (backwards, forwards)"
+                   "  [, ]   Cycle view representations (backwards, forwards)"
+                   ""]
+                  (string/join "\n"))))
   (let [view (get views selected-view-idx)]
     (println (format "view %s/%d%s"
                      (if (nil? selected-view-idx) "-" (str (inc selected-view-idx)))
@@ -77,9 +85,12 @@
     true)
 
   (on-key [_ key]
-    (when (#{\H \L \[ \]} key)
+    (when (#{\H \L \[ \] \?} key)
       (swap! state (fn [{:keys [selected-view-idx views] :as state}]
                      (cond
+                       (= \? key)
+                       (update state :show-help not)
+
                        (nil? selected-view-idx)
                        state
 

@@ -1,7 +1,7 @@
 (ns com.msladecek.inspector
   (:require
     [clojure.java.shell :as shell]
-    [clojure.string :as str]
+    [clojure.string :as string]
     [clojure.tools.cli :as cli]
     [com.msladecek.inspector.protocols :as proto]
     [com.msladecek.inspector.impl.basic-viewer :refer [make-basic-viewer]]
@@ -10,7 +10,7 @@
 (defn stty! [args]
   (-> (shell/sh "sh" "-c" (str "stty " args " < /dev/tty"))
       :out
-      (str/trim)))
+      (string/trim)))
 
 (defmacro with-char-input
   "Set the tty configuration to give us one character at a time."
@@ -35,7 +35,7 @@
   [permitted-values (->> permitted-values
                          (map name)
                          (sort)
-                         (str/join ", ")
+                         (string/join ", ")
                          (str "Value must be one of: "))])
 
 (def default-opts {:transport :tcp})
@@ -74,7 +74,7 @@
         options-summary
         ""
         "For more info, see <https://github.com/msladecek/inspector-tui>"]
-       (str/join "\n")))
+       (string/join "\n")))
 
 (defn -main [& args]
   (let [opts (cli/parse-opts args cli-options)
@@ -83,7 +83,7 @@
     (cond
       (seq errors)
       (binding [*out* *err*]
-        (println (str/join "\n" errors))
+        (println (string/join "\n" errors))
         (println usage-str)
         (System/exit 1))
 
