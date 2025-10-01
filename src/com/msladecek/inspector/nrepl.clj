@@ -14,6 +14,7 @@
   (cider-pprint/pprint value writer options))
 
 (defn middleware [next-handler]
+  ;; TODO: make sure exceptions are also forwarded
   (fn [message]
     (-> message
         (assoc :nrepl.middleware.print/print #'print-replacement)
