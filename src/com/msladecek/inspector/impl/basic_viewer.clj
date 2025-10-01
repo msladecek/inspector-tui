@@ -45,6 +45,16 @@
 
 (defn print-state [{:keys [show-help views selected-view-idx]}]
   ;; TODO: fix broken output when a bunch of data is submitted at once
+  ;; TODO: draw boxes around the various components
+  ;;   /--------------------------\
+  ;;   | help text (when enabled) |
+  ;;   \--------------------------/
+  ;;   /--------------------------\
+  ;;   | view n/N                 |
+  ;;   |--------------------------|
+  ;;   | data representation      |
+  ;;   \--------------------------/
+
   (print reset-seq clear-screen-seq (move-cursor-seq 1 1))
   (when show-help
     (println (->> ["Keybindings:"
