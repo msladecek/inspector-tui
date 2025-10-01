@@ -104,6 +104,7 @@ I wanted a basic, editor-agnostic tool which replicates some of its functionalit
 
 Other (more featureful) data viewer tools exist:
 
+- [`clojure.inspector`](https://clojure.github.io/clojure/clojure.inspector-api.html) graphical inspector distributed along with clojure
 - [cider inspector](https://docs.cider.mx/cider/debugging/inspector.html) (emacs plugin)
 - [vlaaad/reveal](https://vlaaad.github.io/reveal/)
 - [djblue/portal](https://github.com/djblue/portal)
