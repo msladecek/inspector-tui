@@ -68,7 +68,7 @@ In the viewer you should see:
 
 ### Submit data using nrepl middleware
 
-The inspector can hooks into nrepl's `print` function and submits whatever data it receives.
+The inspector can hook into nrepl's `print` function and submits whatever data it receives.
 
 Add the nrepl middleware:
 
@@ -90,7 +90,7 @@ Connect to the nrepl from your editor and evaluate some expressions, in the view
     view 2/2
     {:bonjour "le monde" :message "I evaluated this using nrepl"}
 
-### Traverse the history of traversed data
+### Traverse the history of submitted data
 
 With <kbd>H</kbd>, and <kbd>L</kbd> keys you can go back and forth through the history of previosly submitted data.
 Whenever a new value is submitted to the viewer, it automatically goes to the end of the history and the active view is moved to it.
