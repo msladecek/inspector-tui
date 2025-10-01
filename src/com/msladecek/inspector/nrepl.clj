@@ -6,9 +6,11 @@
     [com.msladecek.inspector :as inspector]))
 
 (defn print-replacement [value writer options]
-  (inspector/send-data!
-    (get options :com.msladecek.inspector.nrepl/middleware-options {})
-    value)
+  (try
+    (inspector/send-data!
+      (get options :com.msladecek.inspector.nrepl/middleware-options {})
+      value)
+    (catch Exception _))
   (cider-pprint/pprint value writer options))
 
 (defn middleware [next-handler]
