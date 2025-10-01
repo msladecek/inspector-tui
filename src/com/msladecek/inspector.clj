@@ -38,6 +38,8 @@
                          (str/join ", ")
                          (str "Value must be one of: "))])
 
+(def default-opts {:transport :tcp})
+
 (def cli-options
   [[nil "--viewer STRING" "The kind of viewer which will be launched"
     :default :basic
@@ -45,8 +47,8 @@
     :parse-fn keyword
     :validate (validate-set-of-keywords #{:basic})]
    [nil "--transport STRING" "Transport protocol which will be used to send data to the viewer"
-    :default :tcp
-    :default-desc "tcp"
+    :default (-> default-opts :transport)
+    :default-desc (-> default-opts :transport name)
     :parse-fn keyword
     :validate (validate-set-of-keywords #{:tcp})]
    [nil "--port PORT" "Used in configuring the transport"
@@ -109,7 +111,7 @@
   ([opts value]
    ;; (require '[com.msladecek.inspector :as inspector])
    ;; (add-tap inspector/send-data!)
-   (let [transport (make-transport opts)]
+   (let [transport (make-transport (merge default-opts opts))]
      (proto/submit transport value))))
 
 (comment
