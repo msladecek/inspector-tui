@@ -21,9 +21,10 @@
                                      :any ::any))
 
 (defn default-representation [data]
-  (if (spec/valid? ::table data)
-    :table
-    :default))
+  (cond
+    (spec/valid? ::table-recursive data) :table-recursive
+    (spec/valid? ::table data) :table
+    :else :default))
 
 (defmulti print-data :representation)
 
