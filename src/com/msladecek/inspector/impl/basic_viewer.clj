@@ -218,7 +218,8 @@
                    (-> state
                        (update :views conj {:data data :representation (default-representation data)})
                        (assoc :selected-view-idx (count views)))))
-    (print-state @state)
+    (locking state
+      (print-state @state))
     true)
 
   (on-key [_ key]
