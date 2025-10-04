@@ -22,11 +22,16 @@
 
 (defn default-representation [data]
   (cond
+    (nil? data) :default
+    (string? data) :string
     (spec/valid? ::table-recursive data) :table-recursive
     (spec/valid? ::table data) :table
     :else :default))
 
 (defmulti print-data :representation)
+
+(defmethod print-data :string [view]
+  (print (:data view)))
 
 (defmethod print-data :table [view]
   (let [all-keys (->> (:data view)
@@ -49,7 +54,7 @@
         (fn [value]
           (match value
                  [:any value-]
-                 (let [value-strs (-> (pprint/pprint value-)
+                 (let [value-strs (-> (print value-)
                                       (with-out-str)
                                       (string/split-lines))]
                    {:value-strs value-strs
@@ -278,8 +283,8 @@
                                               {:e "cat" :g "car"}]}
              {:a 100 :b "carrot"}
              {:c "red" :d [{:i "eye" :j [{:k "kay" :l :elle}
-                                         {:k "cocoa"}]}]}])
-
+                                         {:k "cocoa"}
+                                         {:l "lake\nmead"}]}]}])
 
   (def sample {:representation :table-recursive
                :data data})
@@ -287,8 +292,10 @@
 
   (print-data sample)
 
-  (pprint/print-table [{:a "hello\nworld" :b "potato"}
-                       {:a "dog"}])
+  (->> {:data "lake\nmead" :representation :table-recursive}
+       (print-data)
+       (with-out-str))
+
 
   (require '[clojure.repl :refer [doc]])
 
