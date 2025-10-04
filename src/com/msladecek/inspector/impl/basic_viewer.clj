@@ -166,7 +166,7 @@
        (print "┛")))))
 
 (defn print-state [{:keys [size show-help views selected-view-idx]}]
-  ;; TODO: fix broken output when a bunch of data is submitted at once
+  ;; TODO: fix multiline strings, eg. (tap> (with-out-str (clojure.repl/doc locking)))
   (let [help-content (->> ["Keybindings:"
                            "  ?      Toggle help"
                            "  X      Delete the selected view (no confirmation)"
@@ -289,5 +289,10 @@
 
   (pprint/print-table [{:a "hello\nworld" :b "potato"}
                        {:a "dog"}])
+
+  (require '[clojure.repl :refer [doc]])
+
+  (tap> (with-out-str (doc locking)))
+
   ;;
   )
