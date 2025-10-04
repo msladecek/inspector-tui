@@ -38,8 +38,10 @@
 (defn -left-pad [width value]
   (format (str "%" width "s")  value))
 
+(defn -surround-with [surround value]
+  (str surround value surround))
+
 (defmethod print-data :table-recursive [view]
-  ;; TODO: thin separators between each row (not subrow), thick separators for header separator and columns
   (->> (:data view)
        (spec/conform ::table-recursive)
        (walk/postwalk
@@ -54,9 +56,11 @@
                     :columns (->> value-strs (map count) (apply max 0))})
 
                  [:table table-rows]
-                 (let [separator  " │ "
-                       header-char "═"
-                       header-separator "═╪═"
+                 (let [column-vertical-separator  " │ "
+                       row-horizontal-separator "─"
+                       row-separator-crossing "─┼─"
+                       header-horizontal-separator "═"
+                       header-separator-crossing "═╪═"
                        table-columns (->> table-rows
                                           (mapcat keys)
                                           (into #{})
@@ -69,20 +73,30 @@
                                           (into {}))
                        header (->> table-columns
                                    (map #(-left-pad (column-widths %) %))
-                                   (string/join separator))
+                                   (string/join column-vertical-separator)
+                                   (-surround-with " "))
                        header-separator (->> (for [col table-columns]
-                                               (->> (repeat (column-widths col) header-char)
+                                               (->> (repeat (column-widths col) header-horizontal-separator)
                                                     (apply str)))
-                                             (string/join header-separator))
-                       value-rows (for [row table-rows
-                                        :let [row-total-height (->> (vals row)
-                                                                    (map :rows)
-                                                                    (apply max 1))]
-                                        subrow-no (range row-total-height)]
-                                    (->> (for [col table-columns]
-                                           (let [subrow (get-in row [col :value-strs subrow-no] "")]
-                                             (-left-pad (column-widths col) subrow)))
-                                         (string/join separator)))
+                                             (string/join header-separator-crossing)
+                                             (-surround-with header-horizontal-separator))
+                       row-separator (->> (for [col table-columns]
+                                               (->> (repeat (column-widths col) row-horizontal-separator)
+                                                    (apply str)))
+                                          (string/join row-separator-crossing)
+                                          (-surround-with row-horizontal-separator))
+                       value-rows (->> (for [row table-rows]
+                                         (let [row-total-height (->> (vals row)
+                                                                     (map :rows)
+                                                                     (apply max 1))]
+                                           (for [subrow-no (range row-total-height)]
+                                             (->> (for [col table-columns]
+                                                    (let [subrow (get-in row [col :value-strs subrow-no] "")]
+                                                      (-left-pad (column-widths col) subrow)))
+                                                  (string/join column-vertical-separator)
+                                                  (-surround-with " ")))))
+                                       (interpose [row-separator])
+                                       (apply concat))
                        value-strs (into [header header-separator] value-rows)]
                    {:value-strs value-strs
                     :rows (count value-strs)
