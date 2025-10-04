@@ -130,6 +130,8 @@
      (proto/submit transport value))))
 
 (comment
+  (add-tap send-data!)
+
   (send-data! "potato")
   (send-data! [1 2 3])
   (send-data! [{:a 1 :b "potato" :c "green"}

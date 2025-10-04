@@ -39,9 +39,7 @@
   (format (str "%" width "s")  value))
 
 (defmethod print-data :table-recursive [view]
-  ;; TODO: use box drawing characters
   ;; TODO: thin separators between each row (not subrow), thick separators for header separator and columns
-  ;; TODO: draw box around the final table
   (->> (:data view)
        (spec/conform ::table-recursive)
        (walk/postwalk
@@ -56,9 +54,9 @@
                     :columns (->> value-strs (map count) (apply max 0))})
 
                  [:table table-rows]
-                 (let [separator  " | "
-                       header-char "="
-                       header-separator "=+="
+                 (let [separator  " │ "
+                       header-char "═"
+                       header-separator "═╪═"
                        table-columns (->> table-rows
                                           (mapcat keys)
                                           (into #{})
@@ -270,6 +268,8 @@
 
   (def sample {:representation :table-recursive
                :data data})
+  (tap> data)
+
   (print-data sample)
 
   (pprint/print-table [{:a "hello\nworld" :b "potato"}
