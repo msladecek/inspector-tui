@@ -171,7 +171,6 @@
        (print "┛")))))
 
 (defn print-state [{:keys [size show-help views selected-view-idx]}]
-  ;; TODO: fix multiline strings, eg. (tap> (with-out-str (clojure.repl/doc locking)))
   (let [help-content (->> ["Keybindings:"
                            "  ?      Toggle help"
                            "  X      Delete the selected view (no confirmation)"
