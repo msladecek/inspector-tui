@@ -1,6 +1,7 @@
 {:path ["src"]
 
  :deps {org.clojure/clojure {:mvn/version "1.12.0"}
+        org.clojure/core.match {:mvn/version "1.1.0"}
         org.clojure/tools.cli {:mvn/version "1.2.245"}
         aleph/aleph {:mvn/version "0.9.3"}
         org.clj-commons/gloss {:mvn/version "0.3.6"}}

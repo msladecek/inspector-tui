@@ -1,9 +1,11 @@
 (ns com.msladecek.inspector.impl.basic-viewer
   (:require
+    [clojure.core.match :refer [match]]
     [clojure.datafy :refer [datafy]]
     [clojure.pprint :as pprint]
     [clojure.spec.alpha :as spec]
     [clojure.string :as string]
+    [clojure.walk :as walk]
     [com.msladecek.inspector.protocols :as proto]))
 
 (def reset-seq "\033[0m")
@@ -11,7 +13,12 @@
 (defn move-cursor-seq [row column]
   (format "\033[%d;%dH" row column))
 
+(spec/def ::any (constantly true))
 (spec/def ::table (spec/coll-of map?))
+(spec/def ::table-recursive (spec/or :table (spec/coll-of
+                                              (spec/map-of ::any ::table-recursive :min-count 1)
+                                              :min-count 1)
+                                     :any ::any))
 
 (defn default-representation [data]
   (if (spec/valid? ::table data)
@@ -27,6 +34,67 @@
                       (into #{})
                       (sort))]
     (pprint/print-table all-keys (:data view))))
+
+(defn -left-pad [width value]
+  (format (str "%" width "s")  value))
+
+(defmethod print-data :table-recursive [view]
+  ;; TODO: use box drawing characters
+  ;; TODO: thin separators between each row (not subrow), thick separators for header separator and columns
+  ;; TODO: draw box around the final table
+  (->> (:data view)
+       (spec/conform ::table-recursive)
+       (walk/postwalk
+        (fn [value]
+          (match value
+                 [:any value-]
+                 (let [value-strs (-> (pprint/pprint value-)
+                                      (with-out-str)
+                                      (string/split-lines))]
+                   {:value-strs value-strs
+                    :rows (count value-strs)
+                    :columns (->> value-strs (map count) (apply max 0))})
+
+                 [:table table-rows]
+                 (let [separator  " | "
+                       header-char "="
+                       header-separator "=+="
+                       table-columns (->> table-rows
+                                          (mapcat keys)
+                                          (into #{})
+                                          (sort))
+                       column-widths (->> (for [col table-columns]
+                                            [col (->> table-rows
+                                                      (map #(get-in % [col :columns]))
+                                                      (filter identity)
+                                                      (apply max (count (str col))))])
+                                          (into {}))
+                       header (->> table-columns
+                                   (map #(-left-pad (column-widths %) %))
+                                   (string/join separator))
+                       header-separator (->> (for [col table-columns]
+                                               (->> (repeat (column-widths col) header-char)
+                                                    (apply str)))
+                                             (string/join header-separator))
+                       value-rows (for [row table-rows
+                                        :let [row-total-height (->> (vals row)
+                                                                    (map :rows)
+                                                                    (apply max 1))]
+                                        subrow-no (range row-total-height)]
+                                    (->> (for [col table-columns]
+                                           (let [subrow (get-in row [col :value-strs subrow-no] "")]
+                                             (-left-pad (column-widths col) subrow)))
+                                         (string/join separator)))
+                       value-strs (into [header header-separator] value-rows)]
+                   {:value-strs value-strs
+                    :rows (count value-strs)
+                    :columns (->> value-strs (map count) (apply max 0))})
+
+                 :else
+                 value)))
+       :value-strs
+       (string/join "\n")
+       (print)))
 
 (defmethod print-data :default [view]
   (-> (:data view)
@@ -186,5 +254,25 @@
                     (print-state new-state))))
      (reset! state {:views []})
      (->BasicViewer state)))
-   ([_opts]
-    (make-basic-viewer)))
+  ([_opts]
+   (make-basic-viewer)))
+
+(comment
+  (require '[clojure.repl.deps :refer [sync-deps]])
+  (sync-deps)
+
+  (def data [{:a 1 :b "potato" :c "green" :d [{:e "dog" :f "giraffe"}
+                                              {:e "cat" :g "car"}]}
+             {:a 100 :b "carrot"}
+             {:c "red" :d [{:i "eye" :j [{:k "kay" :l :elle}
+                                         {:k "cocoa"}]}]}])
+
+
+  (def sample {:representation :table-recursive
+               :data data})
+  (print-data sample)
+
+  (pprint/print-table [{:a "hello\nworld" :b "potato"}
+                       {:a "dog"}])
+  ;;
+  )
