@@ -4,10 +4,12 @@ A simple terminal based data inspector for clojure.
 
 ## Usage
 
+[![Clojars Project](https://img.shields.io/clojars/v/com.msladecek/inspector.svg)](https://clojars.org/com.msladecek/inspector)
+
 (The project is in early development so it may be quite buggy and unstable)
 
 There are multiple ways to run the inspector, the easiest is to make an alias to run nrepl and the inspector together in one terminal window.
-See the [Start nrepl and the viewer together](start-nrepl-and-the-viewer-together) section.
+See the [Start nrepl and the viewer together](#start-nrepl-and-the-viewer-together) section.
 
 ### Start the viewer
 
