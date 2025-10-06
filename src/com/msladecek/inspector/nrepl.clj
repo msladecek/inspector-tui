@@ -46,7 +46,7 @@
            (string/join "\n")
            (print))
       (println)
-      (println "nrepl.cmdlin/-main")
+      (println "nrepl.cmdline/-main")
       (println nrepl-usage)
       (println)
       (println "com.msladecek.inspector/-main")

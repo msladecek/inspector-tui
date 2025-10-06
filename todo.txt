@@ -44,6 +44,10 @@ TODO: configure the port
   - make a function that creates a send-data! function with an explicit port
   - use nrepl port +1 if available
 
+TODO: cleanup the readme, particularly the usage section
+  - put the nrepl+viewer usage to the front of the usage section
+  - update output examples
+
 MAYBE: use orchard.inspector https://github.com/clojure-emacs/orchard/blob/master/doc/inspector.org
 
 
