@@ -83,7 +83,7 @@
         "Options:"
         options-summary
         ""
-        "For more info, see <https://github.com/msladecek/inspector-tui>"]
+        "For more information, see <https://github.com/msladecek/inspector>"]
        (string/join "\n")))
 
 (defn -main [& args]
