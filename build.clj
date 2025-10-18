@@ -11,11 +11,11 @@
 (def class-dir "target/classes")
 
 (defn test "Run all the tests." [opts]
-  (let [basis    (b/create-basis {:aliases [:test]})
-        cmds     (b/java-command
-                  {:basis      basis
-                    :main      'clojure.main
-                    :main-args ["-m" "cognitect.test-runner"]})
+  (let [basis (b/create-basis {:aliases [:test]})
+        cmds (b/java-command
+               {:basis basis
+                :main 'clojure.main
+                :main-args ["-m" "cognitect.test-runner"]})
         {:keys [exit]} (b/process cmds)]
     (when-not (zero? exit) (throw (ex-info "Tests failed" {}))))
   opts)
@@ -39,14 +39,16 @@
     [:tag (str "v" version)]]])
 
 (defn- jar-opts [opts]
-  (assoc opts
-          :lib lib   :version version
-          :jar-file  (format "target/%s-%s.jar" lib version)
-          :basis     (b/create-basis {})
-          :class-dir class-dir
-          :target    "target"
-          :src-dirs  ["src"]
-          :pom-data  (pom-template version)))
+  (let [version-opt (get opts :version version)]
+    (assoc opts
+           :lib lib
+           :version version
+           :jar-file (format "target/%s-%s.jar" lib version-opt)
+           :basis (b/create-basis {:aliases [:with-optional-deps]})
+           :class-dir class-dir
+           :target "target"
+           :src-dirs ["src"]
+           :pom-data (pom-template version-opt))))
 
 (defn build "Cleanup target location and build a fresh JAR" [opts]
   (let [opts (jar-opts opts)]

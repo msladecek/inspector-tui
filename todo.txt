@@ -6,9 +6,6 @@ Multiple ways of running it:
   2. As a wrapper for the clojure cli that starts nrepl and enables the tap / inspector output automatically.
 
 Server / client over tcp
-  Q: Who is the server and who is the client?
-  -> not sure, proceed while making it agnostic
-
   In nrepl wrapper mode, nrepl responses are sent to the inspector window over the socket.
   In separate application mode, the tap> sends data to the inspector window over the socket.
 
@@ -45,10 +42,7 @@ TODO: configure the port
   - use nrepl port +1 if available
 
 TODO: cleanup the readme, particularly the usage section
-  - put the nrepl+viewer usage to the front of the usage section
   - update output examples
-  - use git tag in examples instead of commit sha
-  - fix cljdoc build https://app.circleci.com/pipelines/github/cljdoc/builder/67104/workflows/ea026d24-c985-4d8c-8d42-44ed356a70a4/jobs/83478/parallel-runs/0/steps/0-105
 
 MAYBE: use orchard.inspector https://github.com/clojure-emacs/orchard/blob/master/doc/inspector.org
 

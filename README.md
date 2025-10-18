@@ -9,21 +9,44 @@ A simple terminal based data inspector for clojure.
 (The project is in early development so it may be quite buggy and unstable)
 
 There are multiple ways to run the inspector, the easiest is to make an alias to run nrepl and the inspector together in one terminal window.
-See the [Start nrepl and the viewer together](#start-nrepl-and-the-viewer-together) section.
+See the [Start nrepl and the viewer together](#start-nrepl-and-the-inspector-data-viewer-together) section.
 
-### Start the viewer
+It is possible to run the viewer [alone without the nrepl dependency](#start-the-viewer-alone).
+You can then submit data to it over tcp using `send-data!` function which integrates well with [clojure's `tap>`](#submit-data-using-tap) miniframework.
 
-Run the data viewer in a terminal using the `com.msladecek.inspector/-main` function, it may be useful to create an `:inspector` alias first.
+If you wish to run the nrepl integration and the viewer separately, you may [start nrepl with the provided middleware](#submit-data-using-nrepl-middleware).
+
+### Using the viewer
+
+### Start nrepl and the inspector data viewer together
+
+Setup an alias like this:
 
     ;; deps.edn
-    {:aliases {:standalone-viewer
-               {:extra-deps {com.msladecek/inspector {:git/url "https://github.com/msladecek/inspector-tui"
-                                                      :git/sha "<put a commit sha here>"}}
+    {:aliases {:nrepl+inspector
+               {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
+                             cider/cider-nrepl {:mvn/version "0.57.0"}
+                             com.msladecek/inspector {:mvn/version "< put release version here >"}}
+                :main-opts ["-m" "com.msladecek.inspector.nrepl"]}}}
+
+This runs `nrepl.cmdline/-main` and `com.msladecek.inspector/-main` at the same time, in the same terminal window.
+The inspector nrepl middleware is automatically included.
+For details, run:
+
+    clojure :nrepl+inspector --help
+
+### Start the viewer alone
+
+Run the data viewer in a terminal using the `com.msladecek.inspector/-main` function:
+
+    ;; deps.edn
+    {:aliases {:inspector-viewer
+               {:extra-deps {com.msladecek/inspector {:mvn/version "< put release version here >"}}
                 :main-opts ["-m" "com.msladecek.inspector"]}}}
 
 Then start the viewer:
 
-    clojure -M:standalone-inspector
+    clojure -M:inspector-viewer
 
 Once the viewer starts, your terminal will look like this:
 
@@ -78,13 +101,13 @@ The inspector can hook into nrepl's `print` function and submits whatever data i
 Add the nrepl middleware:
 
     ;; deps.edn
-    {:aliases :nrepl+inspector-middleware
-              {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
-                            cider/cider-nrepl {:mvn/version "0.57.0"}
-                            com.msladecek/inspector {:git/url "https://github.com/msladecek/inspector-tui"
-                                                     :git/sha "<put a commit sha here>"}}
-               :main-opts ["-m" "nrepl.cmdline"
-                           "--middleware" "[cider.nrepl/cider-middleware com.msladecek.inspector.nrepl/middleware]"]}}
+    {:aliases {:nrepl+inspector-middleware
+               {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
+                             cider/cider-nrepl {:mvn/version "0.57.0"}
+                             com.msladecek/inspector {:git/url "https://github.com/msladecek/inspector-tui"
+                                                      :git/sha "<put a commit sha here>"}}
+                :main-opts ["-m" "nrepl.cmdline"
+                            "--middleware" "[cider.nrepl/cider-middleware com.msladecek.inspector.nrepl/middleware]"]}}}
 
 Start nrepl using the new alias:
 
@@ -94,20 +117,6 @@ Connect to the nrepl from your editor and evaluate some expressions, in the view
 
     view 2/2
     {:bonjour "le monde" :message "I evaluated this using nrepl"}
-
-### Start nrepl and the viewer together
-
-    ;; deps.edn
-    {:aliases :nrepl+viewer
-              {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
-                            cider/cider-nrepl {:mvn/version "0.57.0"}}
-               :main-opts ["-m" "com.msladecek.inspector.nrepl"]}}
-
-This runs `nrepl.cmdline/-main` and `com.msladecek.inspector/-main` at the same time, in the same terminal window.
-The inspector nrepl middleware is automatically included.
-For details, run:
-
-    clojure :nrepl+viewer --help
 
 ### Traverse the history of submitted data
 

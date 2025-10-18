@@ -6,17 +6,17 @@
         aleph/aleph {:mvn/version "0.9.3"}
         org.clj-commons/gloss {:mvn/version "0.3.6"}}
 
- :aliases {:standalone-viewer
+ :aliases {:inspector-viewer
            {:main-opts ["-m" "com.msladecek.inspector"]}
 
            :nrepl+inspector-middleware
            {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
-                         cider/cider-nrepl {:mvn/version "0.57.0"} }
-            :main-opts  ["-main" "nrepl.cmdline"
+                         cider/cider-nrepl {:mvn/version "0.57.0"}}
+            :main-opts  ["-m" "nrepl.cmdline"
                          "--middleware" "[cider.nrepl/cider-middleware com.msladecek.inspector.nrepl/middleware]"
                          "--interactive"]}
 
-           :nrepl+viewer
+           :nrepl+inspector
            {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
                          cider/cider-nrepl {:mvn/version "0.57.0"}}
             :main-opts ["-m" "com.msladecek.inspector.nrepl"]}
@@ -24,4 +24,8 @@
            :build
            {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}
                    slipset/deps-deploy {:mvn/version "0.2.2"}}
-            :ns-default build}}}
+            :ns-default build}
+
+           :with-optional-deps
+           {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0" :optional true}
+                         cider/cider-nrepl {:mvn/version "0.57.0" :optional true}}}}}
