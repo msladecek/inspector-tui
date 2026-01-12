@@ -1,12 +1,12 @@
 (ns com.msladecek.inspector.impl.tcp-transport
   (:require
-    [aleph.tcp :as tcp]
-    [clojure.edn :as edn]
-    [gloss.core :as gloss]
-    [gloss.io :as io]
-    [manifold.deferred :as d]
-    [manifold.stream :as s]
-    [com.msladecek.inspector.protocols :as proto]))
+   [aleph.tcp :as tcp]
+   [clojure.edn :as edn]
+   [gloss.core :as gloss]
+   [gloss.io :as io]
+   [manifold.deferred :as d]
+   [manifold.stream :as s]
+   [com.msladecek.inspector.protocols :as proto]))
 
 (def default-connection-opts
   {:port 10001
@@ -17,7 +17,7 @@
 (defn -try-to-read-string [string-value]
   (try
     (edn/read-string {:eof nil :default -ignore-tag}
-                     string-value)
+      string-value)
     (catch Exception _
       string-value)))
 
@@ -42,20 +42,20 @@
                     response (if success "ok" "not-ok")]
                 (d/let-flow [result (s/put! stream response)]
                   (when result (d/recur))))))
-          (d/catch (fn [ex]
-                     (s/put! stream (str "ERROR: " ex))
-                     (s/close! stream)))))))
+        (d/catch (fn [ex]
+                   (s/put! stream (str "ERROR: " ex))
+                   (s/close! stream)))))))
 
 (defn start-tcp-server [handler port]
   (let [handler-loop- (handler-loop handler)]
     (tcp/start-server (fn [stream info]
                         (-> (wrap-duplex-stream byte-protocol stream)
-                            (handler-loop- info)))
-                      {:port port})))
+                          (handler-loop- info)))
+      {:port port})))
 
 (defn start-tcp-client [host port]
   (d/chain (tcp/client {:host host :port port})
-           #(wrap-duplex-stream byte-protocol %)))
+    #(wrap-duplex-stream byte-protocol %)))
 
 (defrecord TCPTransport [host port]
   proto/Transport

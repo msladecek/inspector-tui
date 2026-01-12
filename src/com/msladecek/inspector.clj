@@ -1,21 +1,21 @@
 (ns com.msladecek.inspector
   (:require
-    [clojure.java.shell :as shell]
-    [clojure.string :as string]
-    [clojure.tools.cli :as cli]
-    [com.msladecek.inspector.protocols :as proto]
-    [com.msladecek.inspector.impl.basic-viewer :refer [make-basic-viewer]]
-    [com.msladecek.inspector.impl.tcp-transport :as tcp-transport]))
+   [clojure.java.shell :as shell]
+   [clojure.string :as string]
+   [clojure.tools.cli :as cli]
+   [com.msladecek.inspector.protocols :as proto]
+   [com.msladecek.inspector.impl.basic-viewer :refer [make-basic-viewer]]
+   [com.msladecek.inspector.impl.tcp-transport :as tcp-transport]))
 
 (defn stty! [args]
   (-> (shell/sh "sh" "-c" (str "stty " args " < /dev/tty"))
-      :out
-      (string/trim)))
+    :out
+    (string/trim)))
 
 (defn get-terminal-size []
   (let [[height width] (-> (stty! "size")
-                           (string/split #" ")
-                           (->> (map parse-long)))]
+                         (string/split #" ")
+                         (->> (map parse-long)))]
     {:height height
      :width width}))
 
@@ -41,10 +41,10 @@
 
 (defn validate-set-of-keywords [permitted-values]
   [permitted-values (->> permitted-values
-                         (map name)
-                         (sort)
-                         (string/join ", ")
-                         (str "Value must be one of: "))])
+                      (map name)
+                      (sort)
+                      (string/join ", ")
+                      (str "Value must be one of: "))])
 
 (def default-opts {:transport :tcp})
 
@@ -84,7 +84,7 @@
         options-summary
         ""
         "For more information, see <https://github.com/msladecek/inspector>"]
-       (string/join "\n")))
+    (string/join "\n")))
 
 (defn -main [& args]
   (let [opts (cli/parse-opts args cli-options)
