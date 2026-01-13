@@ -22,7 +22,7 @@
 
 (defn- pom-template [version]
   [[:description "A simple terminal based data inspector for clojure."]
-   [:url "https://github.com/msladecek/inspector"]
+   [:url "https://codeberg.org/msladecek/inspector"]
    [:licenses
     [:license
      [:name "BSD 3-Clause License"]
@@ -33,8 +33,8 @@
      [:name "Martin Sladecek"]
      [:url "https://msladecek.com"]]]
    [:scm
-    [:url "https://github.com/msladecek/inspector"]
-    [:connection "scm:git:https://github.com/msladecek/inspector.git"]
+    [:url "https://codeberg.org/msladecek/inspector"]
+    [:connection "scm:git:https://codeberg.org/msladecek/inspector.git"]
     [:developerConnection "scm:git:ssh:git@github.com:msladecek/inspector.git"]
     [:tag (str "v" version)]]])
 

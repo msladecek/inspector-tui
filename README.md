@@ -104,7 +104,7 @@ Add the nrepl middleware:
     {:aliases {:nrepl+inspector-middleware
                {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
                              cider/cider-nrepl {:mvn/version "0.57.0"}
-                             com.msladecek/inspector {:git/url "https://github.com/msladecek/inspector-tui"
+                             com.msladecek/inspector {:git/url "https://codeberg.org/msladecek/inspector"
                                                       :git/sha "<put a commit sha here>"}}
                 :main-opts ["-m" "nrepl.cmdline"
                             "--middleware" "[cider.nrepl/cider-middleware com.msladecek.inspector.nrepl/middleware]"]}}}
