@@ -129,12 +129,27 @@
     (map (fn [[r1 r2]] [r2 r1]))
     (into {})))
 
+(defn -apply-scroll-1 [pad-item size items]
+  (apply concat [(repeat size pad-item) (drop (- size) items)]))
+
+(defn apply-scroll [{:keys [rows columns]} lines]
+  (let [rows (or rows 0)
+        columns (or columns 0)]
+    (->> lines
+      (map #(apply str (-apply-scroll-1 " " (- columns) %)))
+      (-apply-scroll-1 "" rows))))
+
+(defn -apply-scroll-to-last-section [opts sections]
+  (update (into [] sections) (dec (count sections)) #(apply-scroll opts %)))
+
 (defn print-sections
   ([sections]
    (print-sections {} sections))
-  ([{:keys [width height]} sections]
-   (let [content-lines (->> sections
+  ([{:keys [size scroll]} sections]
+   (let [{:keys [width height]} size
+         content-lines (->> sections
                          (map #(string/split-lines (with-out-str (print %))))
+                         (-apply-scroll-to-last-section scroll)
                          (interpose [:separator])
                          (apply concat)
                          (into []))
@@ -170,19 +185,22 @@
        (print (apply str (repeat inner-width "━")))
        (print "┛")))))
 
-(defn print-state [{:keys [size show-help views selected-view-idx]}]
+(defn print-state [{:keys [size scroll show-help views selected-view-idx]}]
   (let [help-content (->> ["Keybindings:"
-                           "  ?      Toggle help"
-                           "  X      Delete the selected view (no confirmation)"
-                           "  H, L   Switch view (backwards, forwards)"
-                           "  [, ]   Cycle representations (backwards, forwards)"
+                           "  ?        Toggle help"
+                           "  h,j,k,l  Scroll"
+                           "  X        Delete the selected view (no confirmation)"
+                           "  H, L     Switch view (backwards, forwards)"
+                           "  [, ]     Cycle representations (backwards, forwards)"
                            ""]
                        (string/join "\n"))
         view (get views selected-view-idx)
-        preamble (format "view %s/%d%s"
+        preamble (format "view %s/%d%s [%+d, %+d]"
                    (if (nil? selected-view-idx) "-" (str (inc selected-view-idx)))
                    (count views)
-                   (if view (str " as " (-> view :representation name)) ""))
+                   (if view (str " as " (-> view :representation name)) "")
+                   (get scroll :rows 0)
+                   (get scroll :columns 0))
         content (with-out-str
                   (cond
                     (nil? selected-view-idx)
@@ -202,7 +220,7 @@
         sections (->> [(when show-help help-content) preamble content]
                    (filterv identity))]
     (print clear-screen-seq (move-cursor-seq 1 1))
-    (print-sections (update size :height (fnil dec 1)) sections)
+    (print-sections {:size (update size :height (fnil dec 1)) :scroll scroll} sections)
     (println)
     (print "Toggle help with [?]")
     (flush)))
@@ -232,10 +250,14 @@
           state
 
           (and (= \H key) (< 0 selected-view-idx))
-          (update state :selected-view-idx dec)
+          (-> state
+            (update :selected-view-idx dec)
+            (dissoc :scroll))
 
           (and (= \L key) (< selected-view-idx (dec (count views))))
-          (update state :selected-view-idx inc)
+          (-> state
+            (update :selected-view-idx inc)
+            (dissoc :scroll))
 
           (= \[ key)
           (update-in state [:views selected-view-idx :representation] previous-representation)
@@ -244,24 +266,38 @@
           (update-in state [:views selected-view-idx :representation] next-representation)
 
           (= \X key)
-          (assoc state
-            :views (->> views
-                     (keep-indexed (fn [idx view]
-                                     (when (not= selected-view-idx idx)
-                                       view)))
-                     (into []))
-            :selected-view-idx (cond
-                                 (= 1 (count views))
-                                 nil
+          (-> state
+            (assoc
+              :views (->> views
+                       (keep-indexed (fn [idx view]
+                                       (when (not= selected-view-idx idx)
+                                         view)))
+                       (into []))
+              :selected-view-idx (cond
+                                   (= 1 (count views))
+                                   nil
 
-                                 (= (dec (count views)) selected-view-idx)
-                                 (dec selected-view-idx)
+                                   (= (dec (count views)) selected-view-idx)
+                                   (dec selected-view-idx)
 
-                                 :else
-                                 selected-view-idx))
+                                   :else
+                                   selected-view-idx))
+            (dissoc :scroll))
 
-               :else
-               state)))))
+          (= \h key)
+          (update-in state [:scroll :columns] (fnil dec 0))
+
+          (= \l key)
+          (update-in state [:scroll :columns] (fnil inc 0))
+
+          (= \j key)
+          (update-in state [:scroll :rows] (fnil dec 0))
+
+          (= \k key)
+          (update-in state [:scroll :rows] (fnil inc 0))
+
+          :else
+          state)))))
 
 (defn make-basic-viewer
   ([]
