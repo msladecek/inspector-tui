@@ -13,18 +13,41 @@
 (defn move-cursor-seq [row column]
   (format "\033[%d;%dH" row column))
 
-(spec/def ::any (constantly true))
-(spec/def ::table (spec/coll-of map?))
-(spec/def ::table-recursive (spec/or :table (spec/coll-of
-                                              (spec/map-of ::any ::table-recursive :min-count 1)
-                                              :min-count 1)
-                              :any ::any))
+(spec/def ::any
+  (constantly true))
+
+(spec/def ::table
+  (spec/coll-of map?))
+
+(spec/def ::table-recursive
+  (spec/or :table (spec/coll-of
+                    (spec/map-of ::any ::table-recursive :min-count 1)
+                    :min-count 1)
+    :any ::any))
+
+(spec/def ::table-recursive-root
+  (spec/coll-of (spec/map-of ::any ::table-recursive
+                  :min-count 1)
+    :min-count 1))
+
+(spec/def ::cause
+  string?)
+
+(spec/def ::via
+  (spec/coll-of map?))
+
+(spec/def ::trace
+  (spec/coll-of vector?))
+
+(spec/def ::error-map
+  (spec/keys :req-un [::cause ::via ::trace]))
 
 (defn default-representation [data]
   (cond
     (nil? data) :default
     (string? data) :string
-    (spec/valid? ::table-recursive data) :table-recursive
+    (spec/valid? ::error-map data) :error
+    (spec/valid? ::table-recursive-root data) :table-recursive
     (spec/valid? ::table data) :table
     :else :default))
 
@@ -32,6 +55,16 @@
 
 (defmethod print-data :string [view]
   (print (:data view)))
+
+(defmethod print-data :error [view]
+  (println "ERROR:" (-> view :data :cause))
+  (doseq [via (-> view :data :via)]
+    (println (str "  " (:type via) ": " (:message via))))
+  (println)
+  (print "Trace:")
+  (pprint/print-table [:file :line :class :method]
+    (for [[cls method filename line-no] (-> view :data :trace)]
+      {:class cls :method method :file filename :line line-no})))
 
 (defmethod print-data :table [view]
   (let [all-keys (->> (:data view)
